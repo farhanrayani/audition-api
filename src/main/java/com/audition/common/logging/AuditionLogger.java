@@ -2,8 +2,12 @@ package com.audition.common.logging;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
+
+import java.net.URI;
 
 @Component
 public class AuditionLogger {
@@ -20,7 +24,7 @@ public class AuditionLogger {
         }
     }
 
-    public void debug(final Logger logger, final String message) {
+    public void debug(final Logger logger, String s, final String message) {
         if (logger.isDebugEnabled()) {
             logger.debug(message);
         }
@@ -58,12 +62,43 @@ public class AuditionLogger {
     }
 
     private String createStandardProblemDetailMessage(final ProblemDetail standardProblemDetail) {
-        // TODO Add implementation here.
-        return StringUtils.EMPTY;
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Problem Detail Error: ");
+
+        if (standardProblemDetail.getTitle() != null) {
+            sb.append("Title: ").append(standardProblemDetail.getTitle()).append(", ");
+        }
+
+        if (standardProblemDetail.getDetail() != null) {
+            sb.append("Detail: ").append(standardProblemDetail.getDetail()).append(", ");
+        }
+
+        if (standardProblemDetail.getStatus() != 0) {
+            sb.append("Status: ").append(standardProblemDetail.getStatus()).append(", ");
+        }
+
+        if (standardProblemDetail.getInstance() != null) {
+            sb.append("Instance: ").append(standardProblemDetail.getInstance());
+        }
+
+        return sb.toString();
     }
 
     private String createBasicErrorResponseMessage(final Integer errorCode, final String message) {
-        // TODO Add implementation here.
-        return StringUtils.EMPTY;
+        final StringBuilder sb = new StringBuilder();
+        sb.append("HTTP Error Response: ");
+        sb.append("Status Code: ").append(errorCode);
+
+        if (StringUtils.isNotBlank(message)) {
+            sb.append(", Message: ").append(message);
+        }
+
+        return sb.toString();
+    }
+
+    public void info(Logger log, String s, HttpMethod method, URI uri) {
+    }
+
+    public void info(Logger log, String s, HttpStatusCode statusCode, HttpMethod method, URI uri) {
     }
 }

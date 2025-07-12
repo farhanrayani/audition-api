@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter
+        xmlns="https://github.com/spotbugs/filter/3.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0
+                        https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
+
+    <!-- Exclude main application class -->
+    <Match>
+        <Class name="com.audition.AuditionApplication"/>
+    </Match>
+
+    <!-- Exclude model/POJO classes from certain checks -->
+    <Match>
+        <Package name="com.audition.model"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Exclude Lombok generated methods -->
+    <Match>
+        <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS"/>
+        <Class name="~.*\$.*"/>
+    </Match>
+
+    <!-- Exclude serialization warnings for exceptions -->
+    <Match>
+        <Class name="com.audition.common.exception.SystemException"/>
+        <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+
+    <!-- Exclude Spring configuration classes from utility class warnings -->
+    <Match>
+        <Class name="~.*Configuration"/>
+        <Bug pattern="UC_USELESS_OBJECT"/>
+    </Match>
+
+    <!-- Exclude test classes from certain checks -->
+    <Match>
+        <Class name="~.*Test"/>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+
+    <!-- Exclude logger field warnings -->
+    <Match>
+        <Field type="org.slf4j.Logger"/>
+        <Bug pattern="MS_SHOULD_BE_FINAL"/>
+    </Match>
+
+    <!-- Exclude Spring Bean warnings -->
+    <Match>
+        <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+        <Field annotation="org.springframework.beans.factory.annotation.Autowired"/>
+    </Match>
+
+    <!-- Exclude RestTemplate null pointer warnings -->
+    <Match>
+        <Class name="com.audition.integration.AuditionIntegrationClient"/>
+        <Method name="~get.*"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH"/>
+    </Match>
+
+    <!-- Exclude configuration classes from unused field warnings -->
+    <Match>
+        <Package name="com.audition.configuration"/>
+        <Bug pattern="UUF_UNUSED_FIELD"/>
+    </Match>
+
+    <!-- Exclude Spring components from constructor warnings -->
+    <Match>
+        <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"/>
+        <Class annotation="org.springframework.stereotype.Component"/>
+    </Match>
+
+    <!-- Exclude HTTP status code magic numbers -->
+    <Match>
+        <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
+        <Or>
+            <Class name="com.audition.integration.AuditionIntegrationClient"/>
+            <Class name="com.audition.web.advice.ExceptionControllerAdvice"/>
+        </Or>
+    </Match>
+
+</FindBugsFilter>

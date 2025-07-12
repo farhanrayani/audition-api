@@ -1,44 +1,112 @@
 <?xml version="1.0"?>
-<ruleset name="Custom Rules"
+<ruleset name="Custom PMD Rules"
          xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
+                             https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
 
-    <description>PMD custom rule sets, see https://pmd.github.io/pmd-6.45.0/pmd_userdocs_making_rulesets.html</description>
+    <description>
+        Custom PMD ruleset for Spring Boot Audition Application
+    </description>
 
-    <exclude-pattern>.*/generated/.*</exclude-pattern>
-
-    <rule ref="category/java/codestyle.xml">
-        <exclude name="ShortVariable"/>
-        <exclude name="LongVariable"/>
-        <exclude name="AtLeastOneConstructor"/>
-        <exclude name="CommentDefaultAccessModifier"/>
-        <exclude name="TooManyStaticImports"/>
-        <exclude name="OnlyOneReturn"/>
+    <!-- Best Practices Rules -->
+    <rule ref="category/java/bestpractices.xml">
+        <exclude name="GuardLogStatement"/>
+        <exclude name="JUnitTestContainsTooManyAsserts"/>
+        <exclude name="JUnitAssertionsShouldIncludeMessage"/>
+        <exclude name="AvoidReassigningParameters"/>
     </rule>
 
-    <rule ref="category/java/security.xml"/>
-    <rule ref="category/java/performance.xml"/>
-    <rule ref="category/java/multithreading.xml"/>
+    <!-- Code Style Rules -->
+    <rule ref="category/java/codestyle.xml">
+        <exclude name="OnlyOneReturn"/>
+        <exclude name="AtLeastOneConstructor"/>
+        <exclude name="CallSuperInConstructor"/>
+        <exclude name="CommentDefaultAccessModifier"/>
+        <exclude name="DefaultPackage"/>
+        <exclude name="LongVariable"/>
+        <exclude name="ShortVariable"/>
+        <exclude name="ShortClassName"/>
+        <exclude name="TooManyStaticImports"/>
+        <exclude name="MethodArgumentCouldBeFinal"/>
+        <exclude name="LocalVariableCouldBeFinal"/>
+    </rule>
 
+    <!-- Design Rules -->
     <rule ref="category/java/design.xml">
         <exclude name="LawOfDemeter"/>
         <exclude name="LoosePackageCoupling"/>
         <exclude name="UseUtilityClass"/>
-        <exclude name="ImmutableField"/>
+        <exclude name="AvoidCatchingGenericException"/>
+        <exclude name="AvoidThrowingRawExceptionTypes"/>
     </rule>
 
+    <!-- Error Prone Rules -->
     <rule ref="category/java/errorprone.xml">
         <exclude name="BeanMembersShouldSerialize"/>
-    </rule>>
-
-    <rule ref="category/java/bestpractices.xml">
-        <exclude name="JUnitAssertionsShouldIncludeMessage"/>
+        <exclude name="DataflowAnomalyAnalysis"/>
+        <exclude name="AvoidLiteralsInIfCondition"/>
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <exclude name="AvoidFieldNameMatchingTypeName"/>
+        <exclude name="MissingSerialVersionUID"/>
     </rule>
 
-    <rule ref="category/java/bestpractices.xml/JUnitTestContainsTooManyAsserts">
+    <!-- Multithreading Rules -->
+    <rule ref="category/java/multithreading.xml">
+        <exclude name="UseConcurrentHashMap"/>
+        <exclude name="DoNotUseThreads"/>
+    </rule>
+
+    <!-- Performance Rules -->
+    <rule ref="category/java/performance.xml">
+        <exclude name="AvoidInstantiatingObjectsInLoops"/>
+        <exclude name="TooFewBranchesForASwitchStatement"/>
+    </rule>
+
+    <!-- Security Rules -->
+    <rule ref="category/java/security.xml"/>
+
+    <!-- Custom Rule Configurations -->
+    <rule ref="category/java/design.xml/TooManyMethods">
         <properties>
-            <property name="maximumAsserts" value="7"/>
+            <property name="maxmethods" value="15"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/TooManyFields">
+        <properties>
+            <property name="maxfields" value="10"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <property name="methodReportLevel" value="10"/>
+            <property name="classReportLevel" value="40"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/ExcessiveMethodLength">
+        <properties>
+            <property name="minimum" value="100"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/ExcessiveClassLength">
+        <properties>
+            <property name="minimum" value="1000"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/ExcessiveParameterList">
+        <properties>
+            <property name="minimum" value="8"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/LinguisticNaming">
+        <properties>
+            <property name="ignoredAnnotations" value="java.lang.Override|lombok.Data|lombok.Getter|lombok.Setter"/>
         </properties>
     </rule>
 

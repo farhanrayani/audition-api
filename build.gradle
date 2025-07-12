@@ -6,9 +6,9 @@ plugins {
     id 'jacoco'
     id "com.github.spotbugs" version "5.0.14"
     id "io.freefair.lombok" version "8.0.1"
-    // TODO Enable checkstyle and PMD. Fix all the relevant issues.
-    //id "checkstyle"
-    //id "pmd"
+    // Enable checkstyle and PMD for code quality analysis
+    id "checkstyle"
+    id "pmd"
 }
 
 group = 'com.audition'
@@ -16,9 +16,8 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 targetCompatibility = '17'
 
-
-// TODO allow for code-analysis.gradle to be applied for code analysis.
-// apply from: 'config/code-analysis.gradle'
+// Apply code analysis configuration
+apply from: 'config/code-analysis.gradle'
 
 configurations {
     compileOnly {
@@ -38,32 +37,48 @@ ext {
 }
 
 dependencies {
+    // Core Spring Boot dependencies
+    implementation "org.springframework.boot:spring-boot-starter-actuator" // For health checks and monitoring
+    implementation "org.springframework.boot:spring-boot-starter-web" // For REST API endpoints
+    implementation "org.springframework.boot:spring-boot-starter-aop" // For cross-cutting concerns like logging
 
-    // TODO Clean up unused dependencies. Add comments on consideration on any improvements you made.
-    implementation "org.springframework.boot:spring-boot-starter-actuator"
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
-    implementation "org.springframework.boot:spring-boot-starter-web"
-    implementation "org.springframework.cloud:spring-cloud-starter-config"
-    implementation "org.springframework.boot:spring-boot-starter-webflux"
-    implementation "org.springframework.boot:spring-boot-starter-aop"
-    implementation "io.micrometer:micrometer-tracing-bridge-brave"
-    implementation "io.micrometer:micrometer-tracing"
-    implementation "io.micrometer:micrometer-registry-prometheus"
-    implementation "io.micrometer:context-propagation"
-    implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j"
-    implementation "org.springframework.cloud:spring-cloud-starter-config"
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+    // Configuration and externalized config support
+    implementation "org.springframework.cloud:spring-cloud-starter-config" // For external configuration
 
-    developmentOnly "org.springframework.boot:spring-boot-devtools"
-    runtimeOnly "io.micrometer:micrometer-registry-prometheus"
+    // Monitoring and observability
+    implementation "io.micrometer:micrometer-tracing-bridge-brave" // For distributed tracing
+    implementation "io.micrometer:micrometer-tracing" // Core tracing functionality
+    implementation "io.micrometer:micrometer-registry-prometheus" // For metrics collection
+    implementation "io.micrometer:context-propagation" // For context propagation in async operations
 
+    // Resilience and fault tolerance
+    implementation "org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j" // For circuit breaker pattern
 
+    // API documentation
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}" // For OpenAPI/Swagger documentation
+
+    // Logging dependencies
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
     implementation "ch.qos.logback:logback-core:${logbackVersion}"
     implementation "ch.qos.logback:logback-classic:${logbackVersion}"
+    implementation "net.logstash.logback:logstash-logback-encoder:7.2" // For structured JSON logging
 
-    testImplementation "org.springframework.boot:spring-boot-starter-test"
-    testImplementation "io.projectreactor:reactor-test"
+    // Apache Commons for utility functions
+    implementation "org.apache.commons:commons-lang3:3.12.0" // Used in AuditionLogger for StringUtils
+
+    // Development tools
+    developmentOnly "org.springframework.boot:spring-boot-devtools" // For development-time features
+
+    // Runtime dependencies
+    runtimeOnly "io.micrometer:micrometer-registry-prometheus" // Runtime metrics registry
+
+    // Test dependencies
+    testImplementation "org.springframework.boot:spring-boot-starter-test" // Core testing framework
+    testImplementation "io.projectreactor:reactor-test" // For reactive testing support
+
+    // Removed unused dependencies:
+    // - spring-boot-starter-data-jpa: Not using database in this application
+    // - spring-boot-starter-webflux: Using traditional servlet stack, not reactive
 }
 
 dependencyManagement {
@@ -72,7 +87,109 @@ dependencyManagement {
     }
 }
 
+// Checkstyle configuration
+checkstyle {
+    toolVersion = '10.3.4'
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    configProperties = [
+            'checkstyle.cache.file': "${buildDir}/checkstyle.cache",
+    ]
+}
 
+checkstyleMain {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+checkstyleTest {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// PMD configuration
+pmd {
+    toolVersion = '6.55.0'
+    ruleSetFiles = files("${rootDir}/config/pmd/pmd-rules.xml")
+    ruleSets = [] // Clear default rule sets since we're using custom ones
+    ignoreFailures = false
+}
+
+pmdMain {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+pmdTest {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// SpotBugs configuration
+spotbugs {
+    ignoreFailures = false
+    effort = 'max'
+    reportLevel = 'medium'
+    excludeFilter = file("${rootDir}/config/spotbugs/spotbugs-exclude.xml")
+}
+
+spotbugsMain {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+spotbugsTest {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// JaCoCo configuration
+jacoco {
+    toolVersion = '0.8.8'
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/AuditionApplication.class', // Exclude main application class
+                    '**/configuration/**', // Exclude configuration classes
+                    '**/model/**' // Exclude model/POJO classes
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80 // 80% code coverage requirement
+            }
+        }
+    }
+}
+
+// Git hooks setup
 task prepareGitHooks(type: Copy) {
     from "$projectDir/git-hooks"
     into "$projectDir/.git/hooks"
@@ -80,7 +197,17 @@ task prepareGitHooks(type: Copy) {
 }
 tasks.matching { it.name != 'prepareGitHooks' }.all { Task task -> task.dependsOn prepareGitHooks }
 
+// Code quality check task
+task codeQualityCheck {
+    dependsOn 'checkstyleMain', 'checkstyleTest', 'pmdMain', 'pmdTest', 'spotbugsMain', 'spotbugsTest', 'jacocoTestCoverageVerification'
+    description = 'Runs all code quality checks'
+    group = 'verification'
+}
+
+// Make build depend on code quality checks
+check.dependsOn codeQualityCheck
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
 }

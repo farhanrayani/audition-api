@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-
 @ControllerAdvice
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
@@ -31,30 +30,30 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(HttpClientErrorException.class)
     ProblemDetail handleHttpClientException(final HttpClientErrorException e) {
+        logger.logErrorWithException(LOG, "HTTP Client Error occurred", e);
         return createProblemDetail(e, e.getStatusCode());
-
     }
-
 
     @ExceptionHandler(Exception.class)
     ProblemDetail handleMainException(final Exception e) {
-        // TODO Add handling for Exception
+        logger.logErrorWithException(LOG, "General exception occurred", e);
         final HttpStatusCode status = getHttpStatusCodeFromException(e);
-        return createProblemDetail(e, status);
-
+        ProblemDetail problemDetail = createProblemDetail(e, status);
+        logger.logStandardProblemDetail(LOG, problemDetail, e);
+        return problemDetail;
     }
 
     @ExceptionHandler(SystemException.class)
     ProblemDetail handleSystemException(final SystemException e) {
-        // TODO `Add Handling for SystemException
+        logger.logErrorWithException(LOG, "System exception occurred", e);
         final HttpStatusCode status = getHttpStatusCodeFromSystemException(e);
-        return createProblemDetail(e, status);
-
+        ProblemDetail problemDetail = createProblemDetail(e, status);
+        logger.logStandardProblemDetail(LOG, problemDetail, e);
+        return problemDetail;
     }
 
-
     private ProblemDetail createProblemDetail(final Exception exception,
-        final HttpStatusCode statusCode) {
+                                              final HttpStatusCode statusCode) {
         final ProblemDetail problemDetail = ProblemDetail.forStatus(statusCode);
         problemDetail.setDetail(getMessageFromException(exception));
         if (exception instanceof SystemException) {
@@ -74,7 +73,10 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 
     private HttpStatusCode getHttpStatusCodeFromSystemException(final SystemException exception) {
         try {
-            return HttpStatusCode.valueOf(exception.getStatusCode());
+            if (exception.getStatusCode() != null) {
+                return HttpStatusCode.valueOf(exception.getStatusCode());
+            }
+            return INTERNAL_SERVER_ERROR;
         } catch (final IllegalArgumentException iae) {
             logger.info(LOG, ERROR_MESSAGE + exception.getStatusCode());
             return INTERNAL_SERVER_ERROR;
@@ -90,6 +92,3 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
         return INTERNAL_SERVER_ERROR;
     }
 }
-
-
-
