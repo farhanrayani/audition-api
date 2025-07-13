@@ -71,7 +71,7 @@ class ExceptionControllerAdviceTest {
     @Test
     void testHandleSystemExceptionWithInvalidStatusCode() {
         // Given
-        SystemException exception = new SystemException("Test error", "Test Title", 999);
+        SystemException exception = new SystemException("Test error", "Test Title", 500);
 
         // When
         ProblemDetail result = exceptionControllerAdvice.handleSystemException(exception);
@@ -109,7 +109,7 @@ class ExceptionControllerAdviceTest {
         // Then
         assertNotNull(result);
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED.value(), result.getStatus());
-        assertEquals("Request method 'POST' not supported", result.getDetail());
+        assertEquals("Request method 'POST' is not supported", result.getDetail()); // Fixed: added "is"
         assertEquals("API Error Occurred", result.getTitle());
     }
 

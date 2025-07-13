@@ -7,12 +7,12 @@ import static org.mockito.Mockito.when;
 import com.audition.integration.AuditionIntegrationClient;
 import com.audition.model.AuditionComment;
 import com.audition.model.AuditionPost;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,7 +22,6 @@ class AuditionServiceTest {
     @Mock
     private AuditionIntegrationClient auditionIntegrationClient;
 
-    @InjectMocks
     private AuditionService auditionService;
 
     private AuditionPost samplePost;
@@ -31,6 +30,19 @@ class AuditionServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Create AuditionService with SimpleMeterRegistry for testing
+        auditionService = new AuditionService(new SimpleMeterRegistry());
+
+        // Use reflection to inject the mock auditionIntegrationClient
+        try {
+            java.lang.reflect.Field field = AuditionService.class.getDeclaredField("auditionIntegrationClient");
+            field.setAccessible(true);
+            field.set(auditionService, auditionIntegrationClient);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to inject mock", e);
+        }
+
+        // Setup test data
         samplePost = new AuditionPost();
         samplePost.setId(1);
         samplePost.setUserId(1);

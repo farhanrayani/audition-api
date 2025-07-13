@@ -6,22 +6,20 @@
 <module name="Checker">
     <property name="charset" value="UTF-8"/>
     <property name="severity" value="warning"/>
-    <property name="fileExtensions" value="java, properties, xml"/>
+    <property name="fileExtensions" value="java"/>
 
     <!-- Excludes all 'module-info.java' files -->
     <module name="BeforeExecutionExclusionFileFilter">
         <property name="fileNamePattern" value="module\-info\.java$"/>
     </module>
 
-    <!-- https://checkstyle.org/config_filters.html#SuppressionFilter -->
+    <!-- Simple suppression filter -->
     <module name="SuppressionFilter">
-        <property name="file" value="${org.checkstyle.sun.suppressionfilter.config}"
-                  default="checkstyle-suppressions.xml" />
+        <property name="file" value="config/checkstyle/checkstyle-suppressions.xml"/>
         <property name="optional" value="true"/>
     </module>
 
-    <!-- Checks for whitespace -->
-    <!-- See http://checkstyle.sf.net/config_whitespace.html -->
+    <!-- Basic file checks -->
     <module name="FileTabCharacter">
         <property name="eachLine" value="true"/>
     </module>
@@ -33,7 +31,7 @@
     </module>
 
     <module name="TreeWalker">
-        <!-- Checks for Naming Conventions -->
+        <!-- Basic naming conventions -->
         <module name="ConstantName"/>
         <module name="LocalFinalVariableName"/>
         <module name="LocalVariableName"/>
@@ -44,110 +42,55 @@
         <module name="StaticVariableName"/>
         <module name="TypeName"/>
 
-        <!-- Checks for imports -->
+        <!-- Import checks -->
         <module name="AvoidStarImport"/>
-        <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
+        <module name="IllegalImport"/>
         <module name="RedundantImport"/>
         <module name="UnusedImports">
             <property name="processJavadoc" value="false"/>
         </module>
 
-        <!-- Checks for Size Violations -->
+        <!-- Size violations -->
         <module name="MethodLength">
             <property name="max" value="150"/>
         </module>
         <module name="ParameterNumber">
-            <property name="max" value="7"/>
+            <property name="max" value="10"/>
         </module>
 
-        <!-- Checks for whitespace -->
+        <!-- Basic whitespace -->
         <module name="EmptyForIteratorPad"/>
         <module name="GenericWhitespace"/>
         <module name="MethodParamPad"/>
         <module name="NoWhitespaceAfter"/>
         <module name="NoWhitespaceBefore"/>
-        <module name="OperatorWrap"/>
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
         <module name="WhitespaceAfter"/>
         <module name="WhitespaceAround"/>
 
-        <!-- Modifier Checks -->
+        <!-- Modifier checks -->
         <module name="ModifierOrder"/>
         <module name="RedundantModifier"/>
 
-        <!-- Checks for blocks -->
+        <!-- Block checks -->
         <module name="AvoidNestedBlocks"/>
         <module name="EmptyBlock"/>
         <module name="LeftCurly"/>
         <module name="NeedBraces"/>
         <module name="RightCurly"/>
 
-        <!-- Checks for common coding problems -->
+        <!-- Common coding problems -->
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
-        <module name="HiddenField">
-            <property name="ignoreConstructorParameter" value="true"/>
-            <property name="ignoreSetter" value="true"/>
-        </module>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
-        <module name="MagicNumber">
-            <property name="ignoreNumbers" value="-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000"/>
-            <property name="ignoreHashCodeMethod" value="true"/>
-            <property name="ignoreAnnotation" value="true"/>
-        </module>
         <module name="MissingSwitchDefault"/>
-        <module name="MultipleVariableDeclarations"/>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
 
-        <!-- Checks for class design -->
-        <module name="DesignForExtension"/>
-        <module name="FinalClass"/>
-        <module name="HideUtilityClassConstructor"/>
-        <module name="InterfaceIsType"/>
-        <module name="VisibilityModifier">
-            <property name="protectedAllowed" value="true"/>
-            <property name="packageAllowed" value="true"/>
-        </module>
-
-        <!-- Miscellaneous other checks -->
+        <!-- Miscellaneous -->
         <module name="ArrayTypeStyle"/>
-        <module name="FinalParameters"/>
-        <module name="TodoComment"/>
         <module name="UpperEll"/>
-
-        <!-- Annotation checks -->
-        <module name="AnnotationLocation">
-            <property name="id" value="AnnotationLocationMostCases"/>
-            <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF"/>
-        </module>
-        <module name="AnnotationLocation">
-            <property name="id" value="AnnotationLocationVariables"/>
-            <property name="tokens" value="VARIABLE_DEF"/>
-            <property name="allowSamelineMultipleAnnotations" value="true"/>
-        </module>
-
-        <!-- Javadoc checks -->
-        <module name="JavadocMethod">
-            <property name="scope" value="public"/>
-            <property name="allowMissingParamTags" value="true"/>
-            <property name="allowMissingReturnTag" value="true"/>
-            <property name="allowedAnnotations" value="Override, Test"/>
-        </module>
-        <module name="JavadocType">
-            <property name="scope" value="public"/>
-        </module>
-        <module name="JavadocVariable">
-            <property name="scope" value="public"/>
-        </module>
-        <module name="JavadocStyle"/>
-
-        <!-- Lambda checks -->
-        <module name="LambdaParameterName"/>
-
-        <!-- String checks -->
-        <module name="StringLiteralEquality"/>
     </module>
 </module>

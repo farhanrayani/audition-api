@@ -1,7 +1,5 @@
 package com.audition.configuration;
 
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanContext;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -10,6 +8,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,14 +29,17 @@ public class ResponseHeaderInjector implements Filter {
         if (response instanceof HttpServletResponse) {
             HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-            // Get current span context
-            Span currentSpan = Span.current();
-            SpanContext spanContext = currentSpan.getSpanContext();
+            // Get trace and span IDs from MDC (Micrometer Tracing)
+            String traceId = MDC.get("traceId");
+            String spanId = MDC.get("spanId");
 
-            // Inject trace and span IDs into response headers
-            if (spanContext.isValid()) {
-                httpResponse.setHeader(TRACE_ID_HEADER, spanContext.getTraceId());
-                httpResponse.setHeader(SPAN_ID_HEADER, spanContext.getSpanId());
+            // Inject trace and span IDs into response headers if available
+            if (traceId != null && !traceId.isEmpty()) {
+                httpResponse.setHeader(TRACE_ID_HEADER, traceId);
+            }
+
+            if (spanId != null && !spanId.isEmpty()) {
+                httpResponse.setHeader(SPAN_ID_HEADER, spanId);
             }
         }
 
