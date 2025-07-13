@@ -39,7 +39,7 @@ pmd {
     toolVersion = codeQualityConfig.pmdVersion
     consoleOutput = true
     ignoreFailures = false
-    ruleSetFiles = files("${rootDir}/config/pmd/pmd-rules.xml")
+    ruleSetFiles = files("${rootDir}/config/pmd/ruleset.xml")
     ruleSets = []
 }
 
@@ -69,7 +69,7 @@ tasks.withType(Checkstyle) {
     reports {
         xml.required = true
         html.required = true
-        html.stylesheet = resources.text.fromFile("${rootDir}/config/checkstyle/checkstyle-simple.xsl")
+        html.stylesheet = resources.text.fromFile("${rootDir}/config/checkstyle/checkstyle-noframes-sorted.xsl")
     }
 }
 
@@ -80,6 +80,7 @@ tasks.withType(Pmd) {
     }
 }
 
+// Configure SpotBugs reports
 tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
     reports {
         xml.required = true

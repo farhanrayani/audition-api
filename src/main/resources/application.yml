@@ -13,6 +13,10 @@ spring:
   sleuth:
     sampler:
       probability: 1.0
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=5m,expireAfterAccess=2m,recordStats
 
 server:
   max-http-request-header-size: 16KB
@@ -25,19 +29,20 @@ server:
   error:
     include-stacktrace: never
     include-message: always
+    include-binding-errors: never
 
 # Application-specific configuration
-application:
-  connection:
-    connect-timeout: 5000
-    read-timeout: 30000
-    write-timeout: 5000
-    response-timeout: 30000
+audition:
   external-apis:
     jsonplaceholder:
-      base-url: https://jsonplaceholder.typicode.com
-      retry-attempts: 3
-      circuit-breaker-enabled: true
+      base-url: ${JSONPLACEHOLDER_BASE_URL:https://jsonplaceholder.typicode.com}
+      timeout: ${EXTERNAL_API_TIMEOUT:30000}
+      retry-attempts: ${RETRY_ATTEMPTS:3}
+      circuit-breaker-enabled: ${CIRCUIT_BREAKER_ENABLED:true}
+  caching:
+    enabled: ${CACHING_ENABLED:true}
+    ttl-minutes: ${CACHE_TTL_MINUTES:5}
+    max-size: ${CACHE_MAX_SIZE:1000}
 
 # Management and monitoring
 management:
@@ -48,7 +53,7 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: health,info,metrics,prometheus # Enable specific endpoints for production
+        include: health,info,metrics,prometheus,caches
   endpoint:
     health:
       show-details: when-authorized
@@ -61,6 +66,8 @@ management:
       enabled: true
     prometheus:
       enabled: true
+    caches:
+      enabled: true
   metrics:
     export:
       prometheus:
@@ -70,8 +77,12 @@ management:
         http.server.requests: true
       percentiles:
         http.server.requests: 0.5, 0.95, 0.99
+      slo:
+        http.server.requests: 100ms,200ms,500ms,1s,2s
     tags:
       application: ${spring.application.name}
+      version: ${audition.version:unknown}
+      environment: ${ENVIRONMENT:dev}
 
 # Logging configuration
 logging:
@@ -82,33 +93,44 @@ logging:
     com.audition: INFO
     org.springframework.web: INFO
     org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.cache: DEBUG
     org.springframework.security: WARN
     org.hibernate: WARN
     io.micrometer: INFO
     brave: WARN
+    io.github.resilience4j: INFO
 
-# Production resilience settings
+# Resilience4j configuration
 resilience4j:
   circuitbreaker:
     instances:
-      jsonPlaceholderService:
+      jsonplaceholder:
         sliding-window-size: 10
         minimum-number-of-calls: 5
         failure-rate-threshold: 50
-        wait-duration-in-open-state: 30000
+        wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
   retry:
     instances:
-      jsonPlaceholderService:
+      jsonplaceholder:
         max-attempts: 3
-        wait-duration: 1000
+        wait-duration: 1s
+        exponential-backoff-multiplier: 2
         retry-exceptions:
           - java.io.IOException
           - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+        ignore-exceptions:
+          - com.audition.common.exception.SystemException
   timelimiter:
     instances:
-      jsonPlaceholderService:
-        timeout-duration: 10000
+      jsonplaceholder:
+        timeout-duration: 10s
 
 # Security settings
 security:
@@ -117,3 +139,126 @@ security:
     content-type-options: nosniff
     xss-protection: "1; mode=block"
     referrer-policy: strict-origin-when-cross-origin
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://yourdomain.com}
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+    max-age: 3600
+
+# API Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: alpha
+    tags-sorter: alpha
+  info:
+    title: Audition API
+    description: API for managing posts and comments
+    version: 1.0.0
+    contact:
+      name: API Support
+      email: support@audition.com
+
+---
+# Development profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  sleuth:
+    sampler:
+      probability: 1.0
+
+logging:
+  level:
+    com.audition: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.cache: DEBUG
+    root: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" # Expose all endpoints in dev
+
+audition:
+  external-apis:
+    jsonplaceholder:
+      base-url: https://jsonplaceholder.typicode.com
+      timeout: 10000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      jsonplaceholder:
+        failure-rate-threshold: 80 # More lenient in dev
+        wait-duration-in-open-state: 10s
+
+---
+# Production profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  sleuth:
+    sampler:
+      probability: 0.1 # Reduced sampling in production
+
+logging:
+  level:
+    com.audition: INFO
+    org.springframework.web.client.RestTemplate: WARN
+    org.springframework.cache: WARN
+    root: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus # Limited endpoints in prod
+
+audition:
+  external-apis:
+    jsonplaceholder:
+      base-url: ${JSONPLACEHOLDER_BASE_URL:https://jsonplaceholder.typicode.com}
+      timeout: 5000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      jsonplaceholder:
+        failure-rate-threshold: 30 # Strict in production
+        wait-duration-in-open-state: 60s
+
+---
+# Test profile
+spring:
+  config:
+    activate:
+      on-profile: test
+  sleuth:
+    enabled: false
+  cache:
+    type: simple # Use simple cache for tests
+
+management:
+  tracing:
+    enabled: false
+
+audition:
+  caching:
+    enabled: false # Disable caching in tests for predictable behavior
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      jsonplaceholder:
+        sliding-window-size: 5
+        minimum-number-of-calls: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s

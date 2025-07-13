@@ -4,24 +4,35 @@ import com.audition.common.exception.SystemException;
 import com.audition.common.logging.AuditionLogger;
 import com.audition.model.AuditionComment;
 import com.audition.model.AuditionPost;
-import java.util.Arrays;
-import java.util.List;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 @Component
 public class AuditionIntegrationClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuditionIntegrationClient.class);
-    private static final String POSTS_URL = "https://jsonplaceholder.typicode.com/posts";
-    private static final String POST_BY_ID_URL = "https://jsonplaceholder.typicode.com/posts/{id}";
-    private static final String COMMENTS_BY_POST_URL = "https://jsonplaceholder.typicode.com/posts/{postId}/comments";
-    private static final String COMMENTS_BY_POST_ID_URL = "https://jsonplaceholder.typicode.com/comments?postId={postId}";
+
+    @Value("${audition.external-apis.jsonplaceholder.base-url:https://jsonplaceholder.typicode.com}")
+    private String baseUrl;
+
+    private static final String POSTS_ENDPOINT = "/posts";
+    private static final String POST_BY_ID_ENDPOINT = "/posts/{id}";
+    private static final String COMMENTS_BY_POST_ENDPOINT = "/posts/{postId}/comments";
+    private static final String COMMENTS_BY_POST_ID_ENDPOINT = "/comments?postId={postId}";
 
     @Autowired
     private RestTemplate restTemplate;
@@ -29,21 +40,41 @@ public class AuditionIntegrationClient {
     @Autowired
     private AuditionLogger auditionLogger;
 
+    @CircuitBreaker(name = "jsonplaceholder", fallbackMethod = "getPostsFallback")
+    @Retry(name = "jsonplaceholder")
+    @TimeLimiter(name = "jsonplaceholder")
+    public CompletableFuture<List<AuditionPost>> getPostsAsync() {
+        return CompletableFuture.supplyAsync(this::getPosts);
+    }
+
+    @CircuitBreaker(name = "jsonplaceholder", fallbackMethod = "getPostsFallback")
+    @Retry(name = "jsonplaceholder")
     public List<AuditionPost> getPosts() {
         try {
-            auditionLogger.info(LOG, "Fetching all posts from {}", POSTS_URL);
-            AuditionPost[] posts = restTemplate.getForObject(POSTS_URL, AuditionPost[].class);
-            return Arrays.asList(posts != null ? posts : new AuditionPost[0]);
+            final String url = baseUrl + POSTS_ENDPOINT;
+            auditionLogger.info(LOG, "Fetching all posts from {}", url);
+
+            AuditionPost[] posts = restTemplate.getForObject(url, AuditionPost[].class);
+            List<AuditionPost> result = Arrays.asList(posts != null ? posts : new AuditionPost[0]);
+
+            auditionLogger.info(LOG, "Successfully fetched {} posts", result.size());
+            return result;
         } catch (final Exception e) {
             auditionLogger.logErrorWithException(LOG, "Error fetching posts", e);
             throw new SystemException("Failed to fetch posts", "External Service Error", 500, e);
         }
     }
 
+    @CircuitBreaker(name = "jsonplaceholder", fallbackMethod = "getPostByIdFallback")
+    @Retry(name = "jsonplaceholder")
     public AuditionPost getPostById(final String id) {
         try {
-            auditionLogger.info(LOG, "Fetching post with id: {}", id);
-            return restTemplate.getForObject(POST_BY_ID_URL, AuditionPost.class, id);
+            final String url = baseUrl + POST_BY_ID_ENDPOINT;
+            auditionLogger.info(LOG, "Fetching post with id: {} from {}", id, url);
+
+            AuditionPost result = restTemplate.getForObject(url, AuditionPost.class, id);
+            auditionLogger.info(LOG, "Successfully fetched post with id: {}", id);
+            return result;
         } catch (final HttpClientErrorException e) {
             auditionLogger.logHttpStatusCodeError(LOG, "Error fetching post with id: " + id, e.getStatusCode().value());
 
@@ -60,6 +91,8 @@ public class AuditionIntegrationClient {
         }
     }
 
+    @CircuitBreaker(name = "jsonplaceholder", fallbackMethod = "getPostByIdWithCommentsFallback")
+    @Retry(name = "jsonplaceholder")
     public AuditionPost getPostByIdWithComments(final String id) {
         try {
             auditionLogger.info(LOG, "Fetching post with id: {} including comments", id);
@@ -71,6 +104,7 @@ public class AuditionIntegrationClient {
             List<AuditionComment> comments = getCommentsForPost(id);
             post.setComments(comments);
 
+            auditionLogger.info(LOG, "Successfully fetched post with {} comments", comments.size());
             return post;
         } catch (final SystemException e) {
             // Re-throw SystemException as-is
@@ -82,12 +116,18 @@ public class AuditionIntegrationClient {
         }
     }
 
+    @CircuitBreaker(name = "jsonplaceholder", fallbackMethod = "getCommentsForPostFallback")
+    @Retry(name = "jsonplaceholder")
     public List<AuditionComment> getCommentsForPost(final String postId) {
         try {
-            auditionLogger.info(LOG, "Fetching comments for post id: {}", postId);
-            AuditionComment[] comments = restTemplate.getForObject(COMMENTS_BY_POST_URL,
-                    AuditionComment[].class, postId);
-            return Arrays.asList(comments != null ? comments : new AuditionComment[0]);
+            final String url = baseUrl + COMMENTS_BY_POST_ENDPOINT;
+            auditionLogger.info(LOG, "Fetching comments for post id: {} from {}", postId, url);
+
+            AuditionComment[] comments = restTemplate.getForObject(url, AuditionComment[].class, postId);
+            List<AuditionComment> result = Arrays.asList(comments != null ? comments : new AuditionComment[0]);
+
+            auditionLogger.info(LOG, "Successfully fetched {} comments for post id: {}", result.size(), postId);
+            return result;
         } catch (final HttpClientErrorException e) {
             auditionLogger.logHttpStatusCodeError(LOG, "Error fetching comments for post id: " + postId,
                     e.getStatusCode().value());
@@ -106,12 +146,18 @@ public class AuditionIntegrationClient {
         }
     }
 
+    @CircuitBreaker(name = "jsonplaceholder", fallbackMethod = "getCommentsByPostIdFallback")
+    @Retry(name = "jsonplaceholder")
     public List<AuditionComment> getCommentsByPostId(final String postId) {
         try {
-            auditionLogger.info(LOG, "Fetching comments by post id: {}", postId);
-            AuditionComment[] comments = restTemplate.getForObject(COMMENTS_BY_POST_ID_URL,
-                    AuditionComment[].class, postId);
-            return Arrays.asList(comments != null ? comments : new AuditionComment[0]);
+            final String url = baseUrl + COMMENTS_BY_POST_ID_ENDPOINT;
+            auditionLogger.info(LOG, "Fetching comments by post id: {} from {}", postId, url);
+
+            AuditionComment[] comments = restTemplate.getForObject(url, AuditionComment[].class, postId);
+            List<AuditionComment> result = Arrays.asList(comments != null ? comments : new AuditionComment[0]);
+
+            auditionLogger.info(LOG, "Successfully fetched {} comments by post id: {}", result.size(), postId);
+            return result;
         } catch (final HttpClientErrorException e) {
             auditionLogger.logHttpStatusCodeError(LOG, "Error fetching comments by post id: " + postId,
                     e.getStatusCode().value());
@@ -128,5 +174,33 @@ public class AuditionIntegrationClient {
             throw new SystemException("Unexpected error occurred while fetching comments",
                     "Internal Server Error", 500, e);
         }
+    }
+
+    // Fallback methods for circuit breaker
+    public List<AuditionPost> getPostsFallback(Exception ex) {
+        auditionLogger.warn(LOG, "Fallback triggered for getPosts: {}", ex.getMessage());
+        return Collections.emptyList();
+    }
+
+    public AuditionPost getPostByIdFallback(String id, Exception ex) {
+        auditionLogger.warn(LOG, "Fallback triggered for getPostById with id {}: {}", id, ex.getMessage());
+        throw new SystemException("Service temporarily unavailable for post " + id,
+                "Service Unavailable", 503, ex);
+    }
+
+    public AuditionPost getPostByIdWithCommentsFallback(String id, Exception ex) {
+        auditionLogger.warn(LOG, "Fallback triggered for getPostByIdWithComments with id {}: {}", id, ex.getMessage());
+        throw new SystemException("Service temporarily unavailable for post with comments " + id,
+                "Service Unavailable", 503, ex);
+    }
+
+    public List<AuditionComment> getCommentsForPostFallback(String postId, Exception ex) {
+        auditionLogger.warn(LOG, "Fallback triggered for getCommentsForPost with postId {}: {}", postId, ex.getMessage());
+        return Collections.emptyList();
+    }
+
+    public List<AuditionComment> getCommentsByPostIdFallback(String postId, Exception ex) {
+        auditionLogger.warn(LOG, "Fallback triggered for getCommentsByPostId with postId {}: {}", postId, ex.getMessage());
+        return Collections.emptyList();
     }
 }

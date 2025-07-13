@@ -24,9 +24,34 @@ public class AuditionLogger {
         }
     }
 
-    public void debug(final Logger logger, String s, final String message) {
+    public void info(final Logger logger, final String message, final Object object1, final Object object2) {
+        if (logger.isInfoEnabled()) {
+            logger.info(message, object1, object2);
+        }
+    }
+
+    public void info(final Logger logger, final String message, final HttpMethod method, final URI uri) {
+        if (logger.isInfoEnabled()) {
+            logger.info(message, method, uri);
+        }
+    }
+
+    public void info(final Logger logger, final String message, final HttpStatusCode statusCode,
+                     final HttpMethod method, final URI uri) {
+        if (logger.isInfoEnabled()) {
+            logger.info(message, statusCode, method, uri);
+        }
+    }
+
+    public void debug(final Logger logger, final String message) {
         if (logger.isDebugEnabled()) {
             logger.debug(message);
+        }
+    }
+
+    public void debug(final Logger logger, final String message, final Object object) {
+        if (logger.isDebugEnabled()) {
+            logger.debug(message, object);
         }
     }
 
@@ -36,9 +61,21 @@ public class AuditionLogger {
         }
     }
 
+    public void warn(final Logger logger, final String message, final Object object) {
+        if (logger.isWarnEnabled()) {
+            logger.warn(message, object);
+        }
+    }
+
     public void error(final Logger logger, final String message) {
         if (logger.isErrorEnabled()) {
             logger.error(message);
+        }
+    }
+
+    public void error(final Logger logger, final String message, final Object object) {
+        if (logger.isErrorEnabled()) {
+            logger.error(message, object);
         }
     }
 
@@ -57,7 +94,7 @@ public class AuditionLogger {
 
     public void logHttpStatusCodeError(final Logger logger, final String message, final Integer errorCode) {
         if (logger.isErrorEnabled()) {
-            logger.error(createBasicErrorResponseMessage(errorCode, message) + "\n");
+            logger.error(createBasicErrorResponseMessage(errorCode, message));
         }
     }
 
@@ -96,9 +133,6 @@ public class AuditionLogger {
         return sb.toString();
     }
 
-    public void info(Logger log, String s, HttpMethod method, URI uri) {
-    }
-
-    public void info(Logger log, String s, HttpStatusCode statusCode, HttpMethod method, URI uri) {
+    public void warn(Logger log, String s, String postId, String message) {
     }
 }
