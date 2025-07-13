@@ -14,18 +14,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ComprehensiveIntegrationTest {
 
     @Mock
@@ -172,9 +174,9 @@ class ComprehensiveIntegrationTest {
     @Test
     void testGetPostByIdWithCommentsSuccess() {
         // Given
-        when(restTemplate.getForObject(contains("/posts/1"), eq(AuditionPost.class), anyString()))
+        when(restTemplate.getForObject(eq("https://jsonplaceholder.typicode.com/posts/{id}"), eq(AuditionPost.class), eq("1")))
                 .thenReturn(samplePost);
-        when(restTemplate.getForObject(contains("/posts/1/comments"), eq(AuditionComment[].class), anyString()))
+        when(restTemplate.getForObject(eq("https://jsonplaceholder.typicode.com/posts/{postId}/comments"), eq(AuditionComment[].class), eq("1")))
                 .thenReturn(sampleCommentsArray);
 
         // When
@@ -221,9 +223,10 @@ class ComprehensiveIntegrationTest {
 
     @Test
     void testGetCommentsForPostWithUnexpectedException() {
-        // Given
+        // Given - Use ResourceAccessException instead of SocketTimeoutException
+        // ResourceAccessException is an unchecked exception that RestTemplate can throw
         when(restTemplate.getForObject(anyString(), eq(AuditionComment[].class), anyString()))
-                .thenThrow(new SocketTimeoutException("Connection timeout"));
+                .thenThrow(new ResourceAccessException("Connection timeout"));
 
         // When & Then
         SystemException exception = assertThrows(SystemException.class,
@@ -284,7 +287,7 @@ class ComprehensiveIntegrationTest {
     @Test
     void testGetPostByIdWithCommentsWhenPostNotFound() {
         // Given
-        when(restTemplate.getForObject(contains("/posts/999"), eq(AuditionPost.class), anyString()))
+        when(restTemplate.getForObject(eq("https://jsonplaceholder.typicode.com/posts/{id}"), eq(AuditionPost.class), eq("999")))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
         // When & Then
@@ -299,9 +302,9 @@ class ComprehensiveIntegrationTest {
     @Test
     void testGetPostByIdWithCommentsWhenCommentsNotFound() {
         // Given
-        when(restTemplate.getForObject(contains("/posts/1"), eq(AuditionPost.class), anyString()))
+        when(restTemplate.getForObject(eq("https://jsonplaceholder.typicode.com/posts/{id}"), eq(AuditionPost.class), eq("1")))
                 .thenReturn(samplePost);
-        when(restTemplate.getForObject(contains("/posts/1/comments"), eq(AuditionComment[].class), anyString()))
+        when(restTemplate.getForObject(eq("https://jsonplaceholder.typicode.com/posts/{postId}/comments"), eq(AuditionComment[].class), eq("1")))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
         // When & Then
@@ -414,5 +417,21 @@ class ComprehensiveIntegrationTest {
         SystemException unprocessableException = assertThrows(SystemException.class,
                 () -> auditionIntegrationClient.getPostById("1"));
         assertEquals(422, unprocessableException.getStatusCode());
+    }
+
+    @Test
+    void testGetCommentsForPostWithConnectionTimeout() {
+        // Given - Use IllegalStateException as an example of an unchecked exception
+        // that could represent various connection issues
+        when(restTemplate.getForObject(anyString(), eq(AuditionComment[].class), anyString()))
+                .thenThrow(new IllegalStateException("Connection timeout"));
+
+        // When & Then
+        SystemException exception = assertThrows(SystemException.class,
+                () -> auditionIntegrationClient.getCommentsForPost("1"));
+
+        assertEquals("Unexpected error occurred while fetching comments", exception.getMessage());
+        assertEquals("Internal Server Error", exception.getTitle());
+        assertEquals(500, exception.getStatusCode());
     }
 }

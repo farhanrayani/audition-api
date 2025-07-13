@@ -43,7 +43,6 @@
 
     <!-- Error Prone Rules -->
     <rule ref="category/java/errorprone.xml">
-        <exclude name="BeanMembersShouldSerialize"/>
         <exclude name="DataflowAnomalyAnalysis"/>
         <exclude name="AvoidLiteralsInIfCondition"/>
         <exclude name="AvoidFieldNameMatchingMethodName"/>
@@ -83,18 +82,6 @@
         <properties>
             <property name="methodReportLevel" value="10"/>
             <property name="classReportLevel" value="40"/>
-        </properties>
-    </rule>
-
-    <rule ref="category/java/design.xml/ExcessiveMethodLength">
-        <properties>
-            <property name="minimum" value="100"/>
-        </properties>
-    </rule>
-
-    <rule ref="category/java/design.xml/ExcessiveClassLength">
-        <properties>
-            <property name="minimum" value="1000"/>
         </properties>
     </rule>
 

@@ -40,16 +40,26 @@
         <Bug pattern="DM_DEFAULT_ENCODING"/>
     </Match>
 
-    <!-- Exclude logger field warnings -->
+    <!-- Exclude logger field warnings - Fixed: Added name attribute -->
     <Match>
-        <Field type="org.slf4j.Logger"/>
+        <Field name="LOG"/>
         <Bug pattern="MS_SHOULD_BE_FINAL"/>
     </Match>
 
     <!-- Exclude Spring Bean warnings -->
     <Match>
         <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
-        <Field annotation="org.springframework.beans.factory.annotation.Autowired"/>
+        <Field name="auditionLogger"/>
+    </Match>
+
+    <Match>
+        <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+        <Field name="restTemplate"/>
+    </Match>
+
+    <Match>
+        <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+        <Field name="auditionIntegrationClient"/>
     </Match>
 
     <!-- Exclude RestTemplate null pointer warnings -->
@@ -68,7 +78,7 @@
     <!-- Exclude Spring components from constructor warnings -->
     <Match>
         <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"/>
-        <Class annotation="org.springframework.stereotype.Component"/>
+        <Class name="~.*Configuration"/>
     </Match>
 
     <!-- Exclude HTTP status code magic numbers -->

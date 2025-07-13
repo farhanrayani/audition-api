@@ -137,14 +137,13 @@ class CoverageCompletionTest {
     @Test
     void testAuditionLoggerWarnWithThreeParameters() {
         // Test the warn method that takes three string parameters
-        when(mockLogger.isWarnEnabled()).thenReturn(true);
+        // This method has an empty implementation, so no mock setup is needed
 
-        // When
-        auditionLogger.warn(mockLogger, "Test message", "postId123", "Additional message");
+        // When - calling the method that doesn't do anything (based on empty implementation)
+        auditionLogger.warn(mockLogger, "Test", "postId123", "Additional message");
 
-        // Then - this method currently has an empty implementation
-        verify(mockLogger, never()).warn(anyString());
-        verify(mockLogger, never()).warn(anyString(), any(), any());
+        // Then - verify no interactions with the mock logger since the method is empty
+        verifyNoInteractions(mockLogger);
     }
 
     @Test

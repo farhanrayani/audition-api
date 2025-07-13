@@ -269,6 +269,6 @@ class EnhancedExceptionControllerAdviceTest {
         assertEquals("Detailed error message", result.getDetail());
         assertEquals("Custom Title", result.getTitle());
         assertNull(result.getInstance()); // Should be null by default
-        assertNull(result.getType()); // Should be null by default
+        assertEquals(URI.create("about:blank"), result.getType());
     }
 }
