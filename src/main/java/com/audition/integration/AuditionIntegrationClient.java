@@ -21,6 +21,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Integration client for external JSONPlaceholder API.
+ *
+ * This client provides resilient communication with the JSONPlaceholder
+ * service, implementing the following patterns:
+ * - Circuit Breaker for fault tolerance
+ * - Retry logic with exponential backoff
+ * - Timeout management
+ * - Fallback methods for graceful degradation
+ *
+ * All methods include comprehensive error handling and structured logging
+ * for observability.
+ *
+ * @author Farhan Rayani
+ */
 @Component
 public class AuditionIntegrationClient {
 

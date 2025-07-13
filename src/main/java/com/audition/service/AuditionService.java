@@ -19,6 +19,22 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Service layer for audition application business logic.
+ *
+ * This service provides cached operations for posts and comments,
+ * integrating with external APIs through the AuditionIntegrationClient.
+ *
+ * Features include:
+ * - Caching with automatic eviction
+ * - Metrics collection for monitoring
+ * - Filtering capabilities for posts
+ * - Performance timing measurements
+ *
+ * @author Farhan Rayani
+ * @see AuditionIntegrationClient
+ */
+
 @Service
 public class AuditionService {
 
@@ -49,6 +65,23 @@ public class AuditionService {
         postsRequestCounter.increment();
         return auditionIntegrationClient.getPosts();
     }
+
+    /**
+     * Filters posts based on provided criteria.
+     *
+     * This method performs in-memory filtering of posts retrieved from the cache.
+     * Filtering logic:
+     * - User ID: Exact match filtering
+     * - Title: Case-insensitive substring matching
+     * - Invalid user ID strings return empty results
+     *
+     * @param userIdFilter string representation of user ID to filter by (null/blank for no filter)
+     * @param titleFilter title substring to search for (null/blank for no filter)
+     * @return filtered list of posts matching all provided criteria
+     * @throws NumberFormatException if userIdFilter is not a valid integer (handled gracefully)
+     * @implNote This method calls getPosts() which utilizes caching for performance.
+     *           Consider the cache warming strategy for production deployments.
+     */
 
     @Timed(value = "audition.posts.filter.time", description = "Time taken to filter posts")
     public List<AuditionPost> getPostsWithFilter(final String userIdFilter, final String titleFilter) {

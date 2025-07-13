@@ -26,6 +26,23 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Web service configuration for REST client and JSON processing.
+ *
+ * This configuration class provides:
+ * - Customized ObjectMapper with specific serialization rules
+ * - Enhanced RestTemplate with logging interceptors
+ * - Consistent JSON processing across the application
+ *
+ * The ObjectMapper is configured to:
+ * - Use camelCase property naming
+ * - Handle dates in yyyy-MM-dd format
+ * - Ignore unknown properties during deserialization
+ * - Exclude null and empty values from serialization
+ *
+ * @author Farhan Rayani
+ */
+
 @Configuration
 public class WebServiceConfiguration implements WebMvcConfigurer {
 

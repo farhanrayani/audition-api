@@ -17,6 +17,22 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+/**
+ * Centralized exception handler for the audition application.
+ *
+ * This advice handles all exceptions thrown by controllers and converts
+ * them to standardized ProblemDetail responses following RFC 7807.
+ *
+ * Handles the following exception types:
+ * - SystemException - Application-specific errors
+ * - HttpClientErrorException - HTTP client errors
+ * - Exception - Generic exceptions
+ *
+ * @author Farhan Rayani
+ * @since 1.0.0
+ * @see SystemException
+ */
+
 @ControllerAdvice
 public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
 

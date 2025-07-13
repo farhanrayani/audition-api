@@ -10,6 +10,23 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Caching configuration using Caffeine cache implementation.
+ *
+ * This configuration sets up in-memory caching with the following specifications:
+ * - Maximum 1000 entries per cache
+ * - Expire after write: 5 minutes
+ * - Expire after access: 2 minutes
+ * - Statistics recording enabled for monitoring
+ *
+ * Predefined cache names:
+ * - posts - for all posts data
+ * - posts-with-comments - for posts with embedded comments
+ * - comments - for standalone comments
+ *
+ * @author Farhan Rayani
+ */
+
 @Configuration
 @EnableCaching
 @EnableScheduling

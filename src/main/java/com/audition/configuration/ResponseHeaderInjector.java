@@ -11,6 +11,20 @@ import java.io.IOException;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
+/**
+ * Servlet filter for injecting OpenTelemetry trace and span IDs into HTTP response headers.
+ *
+ * This filter automatically adds the following headers to all HTTP responses:
+ * - X-Trace-Id - Distributed tracing trace identifier
+ * - X-Span-Id - Current span identifier
+ *
+ * Headers are only added if the corresponding values are available in the
+ * Mapped Diagnostic Context (MDC). This enables client-side correlation of
+ * requests with server-side logs and traces.
+ *
+ * @author Farhan Rayani
+ */
+
 @Component
 public class ResponseHeaderInjector implements Filter {
 

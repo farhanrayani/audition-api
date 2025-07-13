@@ -2,6 +2,21 @@ package com.audition.common.exception;
 
 import lombok.Getter;
 
+/**
+ * Custom exception for application-specific errors.
+ *
+ * This exception extends RuntimeException and provides structured
+ * error information including:
+ * - HTTP status codes
+ * - Detailed error messages
+ * - Custom error titles
+ * - Cause chaining
+ *
+ * Used throughout the application for consistent error handling and
+ * logging purposes.
+ *
+ * @author Farhan Rayani
+ */
 @Getter
 public class SystemException extends RuntimeException {
 

@@ -26,6 +26,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+
+/**
+ * REST controller for managing posts and comments operations.
+ *
+ * This controller provides endpoints for:
+ * - Retrieving posts with optional filtering
+ * - Fetching individual posts by ID
+ * - Getting posts with embedded comments
+ * - Retrieving comments by post ID
+ *
+ * All endpoints include comprehensive input validation and return standardized
+ * error responses following RFC 7807 Problem Details specification.
+ *
+ * @author Farhan Rayani
+ * @see AuditionService
+ * @see AuditionPost
+ * @see AuditionComment
+ */
 @RestController
 @Validated
 @Tag(name = "Posts", description = "Posts management API")
@@ -43,6 +61,22 @@ public class AuditionController {
             @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+
+    /**
+     * Retrieves all posts with optional filtering capabilities.
+     *
+     * This endpoint supports filtering by user ID and title (case-insensitive).
+     * If no filters are provided, all posts are returned. The filtering is performed
+     * in-memory after fetching from the cache/external service.
+     *
+     * @param userId optional filter for posts by specific user ID (must be positive)
+     * @param title optional filter for posts containing the specified title text (case-insensitive, 1-100 characters)
+     * @return list of posts matching the filter criteria, or all posts if no filters provided
+     * @throws SystemException if external service is unavailable or returns invalid data
+     * @apiNote This method leverages caching for performance. Initial requests may be slower
+     *          as data is fetched from external service and cached for subsequent requests.
+     */
+
     @RequestMapping(value = "/posts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody List<AuditionPost> getPosts(
             @Parameter(description = "Filter by user ID (must be positive)")
