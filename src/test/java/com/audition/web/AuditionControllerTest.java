@@ -22,7 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = AuditionController.class)
+@WebMvcTest(AuditionController.class)
 @TestPropertySource(properties = {
         "spring.sleuth.enabled=false",
         "management.tracing.enabled=false"
